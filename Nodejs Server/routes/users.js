@@ -1,9 +1,12 @@
 
 const { Router } = require('express');
-const { check } = require('express-validator');
+const { check, param } = require('express-validator');
 
 
-const { createUser } = require('../controllers/users');
+const { 
+    createUser, 
+    getUserByUsername
+} = require('../controllers/users');
 const validateAtributes = require('../middlewares/validate-atributes');
 
 const router = Router();
@@ -23,8 +26,13 @@ router.post('/',[
     check('email', 'El email no es valido').isEmail(),
     validateAtributes
 ],
-
 createUser);
+
+
+router.get('/:username', [
+    param('username', 'Se necesita un username').notEmpty(),
+    validateAtributes
+], getUserByUsername)
 
 
 module.exports = router;

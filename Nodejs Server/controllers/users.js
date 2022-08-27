@@ -18,13 +18,9 @@ const createUser = async (req = request, res = response) => {
     const extension = fotoPerfil.name.substring(fotoPerfil.name.lastIndexOf('.'));
     const nombreArchivo = `${username.replace(/[^\w\s]/gi, '')}-profile${extension}`;
 
-    console.log(nombreArchivo)
-
-
     try {
         const urlPerfil = await uploadFile(nombreArchivo, fotoPerfil.data);
 
-        console.log(urlPerfil)
         const query = 'CALL proyecto1.addUsuario($1, $2, $3, $4)';
         const params = [username, email, encrypted_pass, urlPerfil];
         // Insertar en la base de datos
@@ -41,6 +37,35 @@ const createUser = async (req = request, res = response) => {
 
 }
 
+const getUserByUsername = async(req = request, res = response) => {
+    const { username } = req.params;
+
+    const query = 'SELECT proyecto1.getUsuario($1)';
+    const params = [username];
+    
+    try {
+        // Obtener usuario en la BDD
+        const client = await dbConnection();
+        const user = await client.query(query, params);
+        console.log(user)
+
+        if (user.rowCount < 1) {
+            return res.status(404).json({
+                msg: `No se encontró ningún usuario asociado al username ${username}`
+            })
+        }
+
+        return res.status(200).json(user.rows[0]);
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({
+            msg: 'No se pudo insertar el usuario, consulte con el administrador. '
+        })
+    }
+}
+
+
 module.exports = {
-    createUser
+    createUser,
+    getUserByUsername, 
 }
