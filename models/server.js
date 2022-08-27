@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const fileupload = require('express-fileupload');
 
 
 class Server {
@@ -10,9 +11,6 @@ class Server {
         this.paths = {
             users: '/api/users',
         }
-
-        // Connect Db
-        // this.connectDB();
 
         // Middlewares
         this.middlewares();
@@ -28,14 +26,13 @@ class Server {
         // Body parsing
         this.app.use(express.json());
 
-    }
+        this.app.use(fileupload());
+        this.app.use(express.urlencoded({ extended: true }));
 
-    async connectDB() {
-        await dbConnection();
     }
 
     routes() {
-        // this.app.use(this.paths.users, require('../routes/users'));
+        this.app.use(this.paths.users, require('../routes/users'));
     }
 
     listen() {
