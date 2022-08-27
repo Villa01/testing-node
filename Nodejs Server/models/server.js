@@ -10,6 +10,7 @@ class Server {
         this.port = process.env.PORT ?? 5000;
         this.paths = {
             users: '/api/users',
+            healthcheck: '/healthcheck'
         }
 
         // Middlewares
@@ -32,6 +33,7 @@ class Server {
     }
 
     routes() {
+        this.app.get(this.paths.healthcheck, (req, res) => res.status(200).json({ok: "ok"}));
         this.app.use(this.paths.users, require('../routes/users'));
     }
 
