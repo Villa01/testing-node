@@ -21,11 +21,14 @@ const createUser = async (req = request, res = response) => {
     try {
         const urlPerfil = await uploadFile(nombreArchivo, fotoPerfil.data);
 
-        const query = 'CALL proyecto1.addUsuario($1, $2, $3, $4)';
+        const query = 'CALL proyecto1.addUsuario($1, $2, $3, $4, 0)';
         const params = [username, email, encrypted_pass, urlPerfil];
         // Insertar en la base de datos
         const client = await dbConnection();
-        await client.query(query, params);
+        const {rows} = await client.query(query, params);
+
+        if( rows.length < 0 || rows[0].ret === 0)
+            return res.status(400).json({msg: 'No se pudo insertar el usuario.'})
 
         return res.status(201).json({ msg: 'Usuario creado con exito.' });
     } catch (err) {

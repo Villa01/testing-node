@@ -1,9 +1,10 @@
 const { compareEncrypted } = require('../helpers/encryption');
+const { dbConnection } = require('../database/config');
 
 const validarPassword = async(req = request, res = response) => {
     const { username, password } = req.body;
 
-    const query = 'SELECT proyecto1.getUsuario($1)';
+    const query = 'SELECT * from proyecto1.getUsuario($1)';
     const params = [username];
 
     let user;
@@ -11,13 +12,15 @@ const validarPassword = async(req = request, res = response) => {
     try {
         // Obtener usuario en la BDD
         const client = await dbConnection();
-        user = await client.query(query, params);
-
-        if (user.rowCount < 1) {
+        const data = await client.query(query, params);
+        if (data.rowCount < 1) {
             return res.status(404).json({
                 msg: `No se encontró ningún usuario asociado al username ${username}`
             })
         }
+        
+        user = data.rows[0];
+        // console.log("🚀 ~ file: auth.js ~ line 16 ~ validarPassword ~ user", user)
 
     } catch (err) {
         console.error(err);
@@ -33,8 +36,9 @@ const validarPassword = async(req = request, res = response) => {
         })
     }
 
+    const { password: pass, ...data } = user;
     return res.json({
-        user
+        data
     })
 }
 
