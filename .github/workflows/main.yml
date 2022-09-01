@@ -29,6 +29,6 @@ jobs:
         name: Build and push node server
         uses: docker/build-push-action@v3
         with:
-          context: .
+          context: ./Nodejs\ Server
           push: true
           tags: villa01/semi1-node-backend:latest
