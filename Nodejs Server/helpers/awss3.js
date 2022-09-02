@@ -9,14 +9,16 @@ const credentials = {
 
 const s3 = new AWS.S3({
     accessKeyId: credentials.ID,
-    secretAccessKey: credentials.SECRET
+    secretAccessKey: credentials.SECRET,
 })
+
 
 const uploadFile = (filename, fileData) => {
     const params = {
         Bucket: credentials.BUCKET_NAME,
         Key: filename,
-        Body: fileData
+        Body: fileData,
+        ACL:'public-read'
     }
     return new Promise((resolve, reject) => {
         s3.upload(params, (err, data) => {
