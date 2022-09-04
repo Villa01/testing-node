@@ -4,16 +4,12 @@ const { check } = require('express-validator');
 
 
 const {
-    createFile
+    createFile, getArchivos
 } = require('../controllers/file');
+const { getAcceso, accesoArchivos } = require('../middlewares/archivos');
 const validateAtributes = require('../middlewares/validate-atributes');
 
 const router = Router();
-
-const accesoArchivos = {
-    'publico': 1,
-    'privado': 2
-}
 
 
 router.post('/', [
@@ -28,13 +24,14 @@ router.post('/', [
         return true;
     }),
     validateAtributes,
-    // Obtener valor numérico del acceso del archivo
-    (req, res, next) => {
-        const acceso = req.body.acceso;
-        req.body.acceso = accesoArchivos[acceso];
-        next();
-    },
+    getAcceso,
 ],
     createFile);
+
+router.get('/', [
+    getAcceso,
+],
+    getArchivos
+);
 
 module.exports = router;

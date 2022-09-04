@@ -1,11 +1,8 @@
+const { request, response } = require('express');
+
 const { dbConnection } = require('../database/config');
 const { uploadFile } = require('../helpers/awss3');
-
-const accesoArchivos = {
-    publico: 1, 
-    privado: 2,
-}
-
+const { accesoArchivos } = require('../middlewares/archivos');
 
 const createFile = async (req = request, res = response) => {
 
@@ -42,6 +39,37 @@ const createFile = async (req = request, res = response) => {
     }
 
 }
+
+const getArchivos = async(req = request, res = response) => {
+
+    const { idUsuario, acceso = accesoArchivos.todos } = req.body;
+    //select * from proyecto1.getArchivo(id, acceso); No pude usar el sp :(
+    
+    const query = `select * from proyecto1.getArchivo($1,$2);`;
+    const params = [idUsuario, acceso];
+    try {
+        
+        // Insertar en la base de datos
+        const client = await dbConnection();
+        const {rows} = await client.query(query, params);
+
+        return res.status(200).json({ archivos: rows });
+    } catch (err) {
+        console.error(err);
+        // if(err.code === '23503') {
+        //     return res.status(400).json({
+        //         msg: `No se pudo insertar el archivo: porque el usuario no existe. `
+        //     })
+        // }
+
+        return res.status(500).json({
+            msg: `No fue posible obtener los archivos`
+        })
+    }
+}
+
+
 module.exports = {
-    createFile
+    createFile,
+    getArchivos
 }
