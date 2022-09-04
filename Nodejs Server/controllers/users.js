@@ -32,7 +32,7 @@ const createUser = async (req = request, res = response) => {
 
         return res.status(201).json({ msg: 'Usuario creado con exito.' });
     } catch (err) {
-        console.error(err);
+        console.error(err.error);
         return res.status(500).json({
             msg: 'No se pudo insertar el usuario, consulte con el administrador. '
         })
@@ -43,7 +43,7 @@ const createUser = async (req = request, res = response) => {
 const getUserByUsername = async(req = request, res = response) => {
     const { username } = req.params;
 
-    const query = 'SELECT proyecto1.getUsuario($1)';
+    const query = 'SELECT * FROM proyecto1.getUsuario($1)';
     const params = [username];
     
     try {
