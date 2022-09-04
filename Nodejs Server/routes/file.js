@@ -4,7 +4,10 @@ const { check } = require('express-validator');
 
 
 const {
-    createFile, getArchivos
+    createFile,
+    getArchivos,
+    deleteArchivo,
+    updateArchivo
 } = require('../controllers/file');
 const { getAcceso, accesoArchivos } = require('../middlewares/archivos');
 const validateAtributes = require('../middlewares/validate-atributes');
@@ -29,9 +32,29 @@ router.post('/', [
     createFile);
 
 router.get('/', [
+    check('idUsuario', 'Se necesita el idUsuario').notEmpty(),
+    validateAtributes,
     getAcceso,
 ],
     getArchivos
+);
+
+router.delete('/', [
+    check('password', 'Se necesita el password').notEmpty(),
+    check('username', 'Se necesita el idUsuario').notEmpty(),
+    check('nombreArchivo', 'Se necesita el nombre del archivo').notEmpty(),
+    validateAtributes,
+],
+    deleteArchivo
+);
+
+router.put('/', [
+    check('password', 'Se necesita el password').notEmpty(),
+    check('username', 'Se necesita el idUsuario').notEmpty(),
+    check('nombreArchivo', 'Se necesita el nombre del archivo').notEmpty(),
+    validateAtributes,
+],
+    updateArchivo
 );
 
 module.exports = router;
