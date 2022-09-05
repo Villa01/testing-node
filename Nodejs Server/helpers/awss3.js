@@ -23,14 +23,14 @@ const uploadFile = (filename, fileData) => {
         Bucket: credentials.BUCKET_NAME,
         Key: name,
         Body: fileData,
-        ACL:'public-read'
+        ACL: 'public-read'
     }
     return new Promise((resolve, reject) => {
         s3.upload(params, (err, data) => {
             if (err) {
                 reject(err)
             }
-            resolve(data.Location)
+            resolve({ url: data.Location, nombre: name })
         })
     })
 

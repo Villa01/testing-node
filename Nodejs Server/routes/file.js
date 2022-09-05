@@ -51,6 +51,8 @@ router.delete('/', [
 router.put('/', [
     check('password', 'Se necesita el password').notEmpty(),
     check('username', 'Se necesita el idUsuario').notEmpty(),
+    check('acceso', 'Se require el acceso del archivo').optional(),
+    getAcceso,
     check('nombreArchivo', 'Se necesita el nombre del archivo').notEmpty(),
     validateAtributes,
 ],

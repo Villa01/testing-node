@@ -1,4 +1,5 @@
 const { dbConnection } = require('../database/config');
+const { compareEncrypted } = require('./encryption');
 
 
 const logIn = (username, password) => {

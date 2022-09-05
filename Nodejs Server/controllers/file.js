@@ -12,7 +12,7 @@ const createFile = async (req = request, res = response) => {
 
     const { nombre = file.name, acceso = accesoArchivos.publico, idUsuario } = req.body;
     try {
-        const urlPerfil = await uploadFile(file.name, file.data);
+        const {url: urlPerfil} = await uploadFile(file.name, file.data);
         // CALL proyecto1.addArchivo(nombre, url, tipo, acceso, usuario, retorno)
         const query = 'CALL proyecto1.addArchivo($1, $2, $3, $4, $5, 0)';
         const params = [nombre, urlPerfil, file.mimetype, acceso, idUsuario];
@@ -23,7 +23,7 @@ const createFile = async (req = request, res = response) => {
 
 
         if (rows.length < 0 || rows[0].ret === 0)
-            return res.status(400).json({ msg: 'No se pudo insertar el archivo.' })
+            return res.status(400).json({ msg: 'No se pudo insertar el archivo. Porque el nombre está repetido' })
 
         return res.status(201).json({ msg: 'Archivo creado con exito.' });
     } catch (err) {
@@ -35,7 +35,7 @@ const createFile = async (req = request, res = response) => {
         }
 
         return res.status(500).json({
-            msg: `No se pudo insertar el archivo: ${err.error}`
+            msg: `No se pudo insertar el archivo: ${err}`
         })
     }
 
@@ -77,6 +77,46 @@ const deleteArchivo = async (req = request, res = response) => {
     let idUsuario;
     try {
 
+        const {data} = await logIn(username, password)
+        idUsuario = data.id;
+    } catch (error) {
+        return res.status(400).json(error);
+    }
+
+    try {
+
+        // Eliminar logicamente 
+        // deleteArchivo(nombre:string, user:int)retorno:int
+        const query = 'CALL proyecto1.deleteArchivo($1, $2, 1)'
+        // console.log("🚀 ~ file: file.js ~ line 91 ~ deleteArchivo ~ query", query)
+        const params = [nombreArchivo, idUsuario];
+        // console.log("🚀 ~ file: file.js ~ line 93 ~ deleteArchivo ~ params", params)
+
+        // Eliminar en la base de datos
+        const client = await dbConnection();
+        const resp = await client.query(query, params);
+
+        const { rows } = resp;
+        // console.log("🚀 ~ file: file.js ~ line 98 ~ deleteArchivo ~ resp", resp)
+        if (rows.length < 0 || rows[0].ret === 0)
+            return res.status(400).json({ msg: 'No se pudo eliminar el archivo, el archivo no existe.' })
+
+        return res.status(204).send();
+
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            msg: 'No se pudo eliminar el archivo, contacte con el administrador'
+        });
+    }
+}
+
+const updateArchivo = async (req = request, res = response) => {
+    const { username, password, nombreArchivo, acceso } = req.body;
+
+    let idUsuario;
+    try {
+
         const { id } = await logIn(username, password)
         idUsuario = id;
     } catch (error) {
@@ -86,9 +126,9 @@ const deleteArchivo = async (req = request, res = response) => {
     try {
 
         // Eliminar logicamente 
-        // deleteArchivo(nombre:string, user:int)retorno:int
-        const query = 'CALL proyecto1.deleteArchivo($1, $2)'
-        const params = [nombreArchivo, idUsuario];
+        // updateArchivo(nombreAnterior:string, user:int, nombreNuevo:string, acceso:int)retorno:int
+        const query = 'CALL updateArchivo($1, $2, $3, $4)'
+        const params = [nombreArchivo];
 
         // Eliminar en la base de datos
         const client = await dbConnection();
@@ -104,10 +144,6 @@ const deleteArchivo = async (req = request, res = response) => {
             msg: 'No se pudo eliminar el archivo, contacte con el administrador'
         });
     }
-}
-
-const updateArchivo = () => {
-
 }
 
 module.exports = {
