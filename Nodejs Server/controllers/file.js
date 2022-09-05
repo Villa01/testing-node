@@ -112,36 +112,36 @@ const deleteArchivo = async (req = request, res = response) => {
 }
 
 const updateArchivo = async (req = request, res = response) => {
-    const { username, password, nombreArchivo, acceso } = req.body;
+    const { username, password, nombreArchivo, acceso, nombreNuevo } = req.body;
 
     let idUsuario;
     try {
 
-        const { id } = await logIn(username, password)
-        idUsuario = id;
+        const { data } = await logIn(username, password)
+        idUsuario = data.id;
     } catch (error) {
         return res.status(400).json(error);
     }
 
     try {
-
-        // Eliminar logicamente 
         // updateArchivo(nombreAnterior:string, user:int, nombreNuevo:string, acceso:int)retorno:int
-        const query = 'CALL updateArchivo($1, $2, $3, $4)'
-        const params = [nombreArchivo];
+        const query = 'CALL proyecto1.updateArchivo($1, $2, $3, $4,0)'
+        const params = [nombreArchivo, idUsuario, nombreNuevo, acceso];
+        console.log("🚀 ~ file: file.js ~ line 130 ~ updateArchivo ~ params", params)
 
-        // Eliminar en la base de datos
+        // Modificar en la base de datos
         const client = await dbConnection();
         const { rows } = await client.query(query, params);
 
         if (rows.length < 0 || rows[0].ret === 0)
-            return res.status(400).json({ msg: 'No se pudo eliminar el archivo.' })
+            return res.status(400).json({ msg: 'No se pudo modificar el archivo.' })
 
-        return res.status(204).json({ msg: 'Archivo eliminado con exito.' });
+        return res.status(204).send();
 
     } catch (error) {
+        console.error(error);
         res.status(500).json({
-            msg: 'No se pudo eliminar el archivo, contacte con el administrador'
+            msg: 'No se pudo modificar el archivo, contacte con el administrador'
         });
     }
 }

@@ -54,6 +54,7 @@ router.put('/', [
     check('acceso', 'Se require el acceso del archivo').optional(),
     getAcceso,
     check('nombreArchivo', 'Se necesita el nombre del archivo').notEmpty(),
+    check('nombreNuevo', 'Se necesita el nombreNuevo').notEmpty(),
     validateAtributes,
 ],
     updateArchivo
