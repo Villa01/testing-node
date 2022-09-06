@@ -6,7 +6,8 @@
   "author": "Villa01 <javillatoro1@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "dev": "node index.js"
+    "dev": "nodemon index.js",
+    "start": "node index.js"
   },
   "dependencies": {
     "aws-sdk": "^2.1202.0",
@@ -18,8 +19,10 @@
     "express-fileupload": "^1.4.0",
     "express-validator": "^6.14.2",
     "morgan": "^1.10.0",
+    "nodemon": "^2.0.19",
     "pg": "^8.8.0",
     "pg-hstore": "^2.3.4",
-    "sequelize": "^6.21.4"
+    "sequelize": "^6.21.4",
+    "uuid": "^8.3.2"
   }
 }

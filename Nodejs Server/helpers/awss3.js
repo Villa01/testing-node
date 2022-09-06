@@ -1,4 +1,7 @@
 const AWS = require('aws-sdk');
+const { v4: uuidv4 } = require('uuid');
+
+
 
 
 const credentials = {
@@ -9,21 +12,25 @@ const credentials = {
 
 const s3 = new AWS.S3({
     accessKeyId: credentials.ID,
-    secretAccessKey: credentials.SECRET
+    secretAccessKey: credentials.SECRET,
 })
 
+
 const uploadFile = (filename, fileData) => {
+    const name = uuidv4() + filename;
+    console.log(name);
     const params = {
         Bucket: credentials.BUCKET_NAME,
-        Key: filename,
-        Body: fileData
+        Key: name,
+        Body: fileData,
+        ACL: 'public-read'
     }
     return new Promise((resolve, reject) => {
         s3.upload(params, (err, data) => {
             if (err) {
                 reject(err)
             }
-            resolve(data.Location)
+            resolve({ url: data.Location, nombre: name })
         })
     })
 
