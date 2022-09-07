@@ -7,7 +7,8 @@ const {
     createFile,
     getArchivos,
     deleteArchivo,
-    updateArchivo
+    updateArchivo,
+    getPublicFiles
 } = require('../controllers/file');
 const { getAcceso, accesoArchivos } = require('../middlewares/archivos');
 const validateAtributes = require('../middlewares/validate-atributes');
@@ -44,7 +45,7 @@ router.get('/public/:idUsuario', [
     validateAtributes,
     getAcceso,
 ],
-    getArchivos
+    getPublicFiles
 );
 
 router.delete('/', [

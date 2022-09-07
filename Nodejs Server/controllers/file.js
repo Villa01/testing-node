@@ -171,5 +171,6 @@ module.exports = {
     createFile,
     getArchivos,
     deleteArchivo,
-    updateArchivo
+    updateArchivo,
+    getPublicFiles
 }
