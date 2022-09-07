@@ -70,6 +70,27 @@ const getArchivos = async (req = request, res = response) => {
 }
 
 
+const getPublicFiles = async (req = request, res = response) => {
+
+    const { idUsuario } = req.params;
+
+    const query = `select * from proyecto1.getArchivos($1);`;
+    const params = [idUsuario];
+    try {
+
+        // Insertar en la base de datos
+        const client = await dbConnection();
+        const { rows } = await client.query(query, params);
+
+        return res.status(200).json({ archivos: rows });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({
+            msg: `No fue posible obtener los archivos`
+        })
+    }
+}
+
 const deleteArchivo = async (req = request, res = response) => {
 
     const { username, password, nombreArchivo } = req.body;

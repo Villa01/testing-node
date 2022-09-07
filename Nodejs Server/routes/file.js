@@ -1,6 +1,6 @@
 
 const { Router } = require('express');
-const { check } = require('express-validator');
+const { check, param } = require('express-validator');
 
 
 const {
@@ -33,6 +33,14 @@ router.post('/', [
 
 router.get('/', [
     check('idUsuario', 'Se necesita el idUsuario').notEmpty(),
+    validateAtributes,
+    getAcceso,
+],
+    getArchivos
+);
+
+router.get('/public/:idUsuario', [
+    param('idUsuario', 'Se necesita el idUsuario').notEmpty(),
     validateAtributes,
     getAcceso,
 ],
