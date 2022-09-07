@@ -62,6 +62,32 @@ const getUserByUsername = async(req = request, res = response) => {
     } catch (err) {
         console.error(err);
         return res.status(500).json({
+            msg: 'No se pudo obtener el usuario, consulte con el administrador. '
+        })
+    }
+}
+
+const getAllUsers = async (req = request, res = response) => { 
+
+    const { idUsuario } = req.params;
+
+    const query = 'SELECT * FROM proyecto1.getUsers($1)';
+    const params = [idUsuario];
+    
+    try {
+        const client = await dbConnection();
+        const user = await client.query(query, params);
+
+        if (user.rowCount < 1) {
+            return res.status(404).json({
+                msg: `No se encontró ningún usuario asociado al username ${idUsuario}`
+            })
+        }
+
+        return res.status(200).json({usuarios: user.rows});
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({
             msg: 'No se pudo insertar el usuario, consulte con el administrador. '
         })
     }
@@ -71,4 +97,5 @@ const getUserByUsername = async(req = request, res = response) => {
 module.exports = {
     createUser,
     getUserByUsername, 
+    getAllUsers
 }

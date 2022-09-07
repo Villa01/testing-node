@@ -5,7 +5,8 @@ const { check, param } = require('express-validator');
 
 const { 
     createUser, 
-    getUserByUsername
+    getUserByUsername,
+    getAllUsers
 } = require('../controllers/users');
 const validateAtributes = require('../middlewares/validate-atributes');
 
@@ -33,6 +34,11 @@ router.get('/:username', [
     param('username', 'Se necesita un username').notEmpty(),
     validateAtributes
 ], getUserByUsername)
+
+router.get('/all/:idUsuario', [
+    param('idUsuario', 'Se necesita un username').notEmpty(),
+    validateAtributes
+], getAllUsers)
 
 
 module.exports = router;
