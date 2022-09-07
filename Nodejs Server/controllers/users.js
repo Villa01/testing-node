@@ -40,6 +40,32 @@ const createUser = async (req = request, res = response) => {
 
 }
 
+const addFriend = async (req = request, res = response) => {
+
+    const { idUsuarioActual, idAmigo } = req.body;
+
+    try {
+        const query = 'CALL proyecto1.addFriend($1, $2,0)';
+        const params = [idUsuarioActual, idAmigo];
+        // Insertar en la base de datos
+        const client = await dbConnection();
+        const {rows} = await client.query(query, params);
+
+        if( rows.length < 0 || rows[0].ret === 0)
+            return res.status(400).json({msg: 'No se pudo agregar el amigo.'})
+
+        return res.status(201).json({ msg: 'Amigo agregad con exito.' });
+    } catch (err) {
+        console.error(err.error);
+        return res.status(500).json({
+            msg: 'No se pudo agregar el amigo, consulte con el administrador. '
+        })
+    }
+
+}
+
+
+
 const getUserByUsername = async(req = request, res = response) => {
     const { username } = req.params;
 
@@ -62,6 +88,32 @@ const getUserByUsername = async(req = request, res = response) => {
     } catch (err) {
         console.error(err);
         return res.status(500).json({
+            msg: 'No se pudo obtener el usuario, consulte con el administrador. '
+        })
+    }
+}
+
+const getAllUsers = async (req = request, res = response) => { 
+
+    const { idUsuario } = req.params;
+
+    const query = 'SELECT * FROM proyecto1.getUsers($1)';
+    const params = [idUsuario];
+    
+    try {
+        const client = await dbConnection();
+        const user = await client.query(query, params);
+
+        if (user.rowCount < 1) {
+            return res.status(404).json({
+                msg: `No se encontró ningún usuario asociado al username ${idUsuario}`
+            })
+        }
+
+        return res.status(200).json({usuarios: user.rows});
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({
             msg: 'No se pudo insertar el usuario, consulte con el administrador. '
         })
     }
@@ -71,4 +123,6 @@ const getUserByUsername = async(req = request, res = response) => {
 module.exports = {
     createUser,
     getUserByUsername, 
+    getAllUsers,
+    addFriend
 }

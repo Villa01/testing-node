@@ -5,7 +5,9 @@ const { check, param } = require('express-validator');
 
 const { 
     createUser, 
-    getUserByUsername
+    getUserByUsername,
+    getAllUsers,
+    addFriend
 } = require('../controllers/users');
 const validateAtributes = require('../middlewares/validate-atributes');
 
@@ -28,11 +30,23 @@ router.post('/',[
 ],
 createUser);
 
+router.post('/add/',[
+    check('idUsuarioActual', 'Se necesita el idUsuarioActual').notEmpty(),
+    check('idAmigo', 'Se necesita el idAmigo').notEmpty(),
+    validateAtributes
+],
+addFriend);
+
 
 router.get('/:username', [
     param('username', 'Se necesita un username').notEmpty(),
     validateAtributes
 ], getUserByUsername)
+
+router.get('/all/:idUsuario', [
+    param('idUsuario', 'Se necesita un username').notEmpty(),
+    validateAtributes
+], getAllUsers)
 
 
 module.exports = router;

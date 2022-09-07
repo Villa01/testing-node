@@ -1,13 +1,14 @@
 
 const { Router } = require('express');
-const { check } = require('express-validator');
+const { check, param } = require('express-validator');
 
 
 const {
     createFile,
     getArchivos,
     deleteArchivo,
-    updateArchivo
+    updateArchivo,
+    getPublicFiles
 } = require('../controllers/file');
 const { getAcceso, accesoArchivos } = require('../middlewares/archivos');
 const validateAtributes = require('../middlewares/validate-atributes');
@@ -37,6 +38,14 @@ router.get('/', [
     getAcceso,
 ],
     getArchivos
+);
+
+router.get('/public/:idUsuario', [
+    param('idUsuario', 'Se necesita el idUsuario').notEmpty(),
+    validateAtributes,
+    getAcceso,
+],
+    getPublicFiles
 );
 
 router.delete('/', [
