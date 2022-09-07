@@ -1,5 +1,3 @@
-from distutils.command.upload import upload
-import json
 from flask import Flask
 from flask import request
 from flask_cors import CORS
@@ -65,7 +63,6 @@ def login():
         params = [user]
         cur = connection.cursor()
         cur.execute(query, params)
-        print(cur)
         connection.commit()
         response = {}
         for id, username, email, passw, perfil in cur.fetchall():
@@ -73,6 +70,41 @@ def login():
                 response['id'] = id
                 response['username'] = username
                 response['email'] = email
+                response['perfil'] = perfil
+                print("Usuario encontrado")
+            else:
+                response = {'message:' 'No se encontró al usuario asociado al username ' + user}
+                print("Usuario no encontrado")
+
+        cur.close()
+        connection.close()
+        return jsonify(response)
+    except Exception as e:
+        print(e)
+        response = {
+            'message': 'No se encontró al usuario ingresado, intente nuevamente'}
+        return jsonify(response)
+
+#OBTENER USUARIOS POR NOMBRE
+@app.route('/api/users/<user>', methods=['GET'])
+def getUsersByName(user):
+    try:
+        #Obtenemos al usuario que vamos a buscar
+        print(user)
+
+        #Invocamos la query para realizar la busqueda
+        query = 'SELECT * FROM proyecto1.getUsuario(%s)'
+        params = [user]
+        cur = connection.cursor()
+        cur.execute(query, params)
+        connection.commit()
+        response = {}
+        for id, username, email, passw, perfil in cur.fetchall():
+            if user == username:
+                response['id'] = id
+                response['username'] = username
+                response['email'] = email
+                response['password'] = passw
                 response['perfil'] = perfil
                 print("Usuario encontrado")
             else:
