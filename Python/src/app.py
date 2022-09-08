@@ -1,5 +1,6 @@
 from distutils.command.upload import upload
 import json
+from logging import exception
 import mimetypes
 from flask import Flask
 from flask import request
@@ -310,6 +311,51 @@ def deleteFile():
     except Exception as e:
         print(e)
         response = {'message': 'No se pudo borrar el archivo'}
+        return jsonify(response)
+
+# OBTENER ARCHIVOS POR ID
+
+
+@app.route('/api/file/', methods=['GET'])
+def getFiles():
+    try:
+        # Obtenemos los datos del json
+        idUsuario = request.json['idUsuario']
+        acceso = request.json['acceso']
+
+        # Acceso en 0 es publico, en 1 es privado y en 2 es todos, que busca todos los tipos de acceso
+        if acceso == "publico":
+            accesoFinal = 0
+        elif acceso == "privado":
+            accesoFinal = 1
+        elif acceso == "todos":
+            accesoFinal = 2
+        else:
+            response = {
+                'message': 'El acceso es publico, privado o todos. Intentelo nuevamente'}
+            return jsonify(response)
+
+        # Procedemos a hacer la query para buscar los archivos
+        query = 'SELECT * FROM proyecto1.getArchivo(%s, %s)'
+        params = [idUsuario, accesoFinal]
+        cur = connection.cursor()
+        cur.execute(query, params)
+        connection.commit()
+        response = {}
+        rows = []
+        for id, nombre, url, tipo in cur.fetchall():
+            response['id'] = id
+            response['nombre'] = nombre
+            response['url'] = url
+            response['tipo'] = tipo
+            rows.append(response)
+        cur.close()
+        response2 = {'archivos': rows}
+        return jsonify(response2)
+
+    except Exception as e:
+        print(e)
+        response = {'message': 'No se encontro ningun archivo'}
         return jsonify(response)
 
 
