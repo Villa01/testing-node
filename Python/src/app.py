@@ -2,6 +2,7 @@ from distutils.command.upload import upload
 import json
 from logging import exception
 import mimetypes
+from sqlite3 import connect
 from flask import Flask
 from flask import request
 from flask_cors import CORS
@@ -67,13 +68,48 @@ def loginForDeleteFiles(user, password):
                 bandera = False
                 id = -1
                 return bandera, id
-        connection.commit()
-        cur.close()
     except Exception as e:
         print(e)
         bandera = False
         id = -1
         return bandera, id
+
+
+def getFilesByID(idUsuario, acceso, nombreArchivo):
+    try:
+
+        # Acceso en 0 es publico, en 1 es privado y en 2 es todos, que busca todos los tipos de acceso
+        if acceso == "publico":
+            accesoFinal = 0
+        elif acceso == "privado":
+            accesoFinal = 1
+        elif acceso == "todos":
+            accesoFinal = 2
+        else:
+            urlArchivo = ""
+            bandera = False
+            return bandera, urlArchivo
+
+        # Procedemos a hacer la query para buscar los archivos
+        query = 'SELECT * FROM proyecto1.getArchivo(%s, %s)'
+        params = [idUsuario, accesoFinal]
+        cur = connection.cursor()
+        cur.execute(query, params)
+        response = {}
+        for id, nombre, url, tipo in cur.fetchall():
+            if nombre == nombreArchivo:
+                bandera = True
+                urlArchivo = url
+                return bandera, urlArchivo
+            else:
+                bandera = False
+                urlArchivo = ""
+                return bandera, urlArchivo
+
+    except Exception as e:
+        print(e)
+        response = {'message': 'No se encontro ningun archivo'}
+        return jsonify(response)
 
 # LOGIN
 
@@ -356,6 +392,67 @@ def getFiles():
     except Exception as e:
         print(e)
         response = {'message': 'No se encontro ningun archivo'}
+        return jsonify(response)
+
+
+# EDITAR ARCHIVOS
+@app.route('/api/file/', methods=['PUT'])
+def editFiles():
+    # Obtenemos las variables de entorno para conectarnos al s3
+    s3Client = boto3.client('s3', aws_access_key_id=os.getenv('AWS_ID_PASSWORD'),
+                            aws_secret_access_key=os.getenv('AWS_PASSWORD'))
+    bucket_name = os.getenv('AWS_S3_NAME')
+
+    try:
+        # Obtenemos los valores del json
+        password = request.json['password']
+        username = request.json['username']
+        nombreArchivo = request.json['nombreArchivo']
+        acceso = request.json['acceso']
+        nombreNuevo = request.json['nombreNuevo']
+
+        # Obtenemos el int del acceso
+        if acceso == "publico":
+            accesoFinal = 0
+        elif acceso == "privado":
+            accesoFinal = 1
+        else:
+            response = {
+                'message': 'El acceso es publico o privado. Vuelva a intentar'}
+            return jsonify(response)
+
+        # Verificamos mediante la funcion login si el usuario existe
+        function = loginForDeleteFiles(username, password)
+        bandera = function[0]
+        idUsuario = function[1]
+
+        # Si el login devuelve verdadero, entonces invocamos el query para updatear archivos
+        if bandera:
+            query = 'CALL proyecto1.updateArchivo(%s, %s, %s, %s, 0)'
+            params = [nombreArchivo, idUsuario, nombreNuevo, accesoFinal]
+            cur = connection.cursor()
+            cur.execute(query, params)
+            connection.commit()
+            cur.close()
+            connection.close()
+
+            # Vamos a copiar el archivo viejo y renombrarlo en el s3
+            copy_source = bucket_name + "/" + nombreArchivo
+            s3Client.copy_object(Bucket=bucket_name,
+                                 CopySource=copy_source, Key=nombreNuevo)
+
+            # Ahora borramos del s3 el archivo viejo definitivamente
+            s3Client.delete_object(Bucket=bucket_name, Key=nombreArchivo)
+            response = {'message': 'Archivo modificado con exito'}
+            return jsonify(response)
+
+        else:
+            response = {'message': 'No se pudo modificar el archivo'}
+            return jsonify(response)
+
+    except Exception as e:
+        print(e)
+        response = {'message': 'No se pudo modificar el archivo'}
         return jsonify(response)
 
 
