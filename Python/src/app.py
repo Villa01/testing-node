@@ -1,4 +1,5 @@
 from distutils.command.upload import upload
+import json
 import mimetypes
 from flask import Flask
 from flask import request
@@ -48,14 +49,40 @@ def compareEncrypted(string1, string2):
     return bcrypt.checkpw(string1, string2)
 
 
+def loginForDeleteFiles(user, password):
+    # Procedemos a invocar el query de la db para validar el login
+    try:
+        query = 'SELECT * from proyecto1.getUsuario(%s)'
+        params = [user]
+        cur = connection.cursor()
+        cur.execute(query, params)
+        for id, username, email, passw, perfil in cur.fetchall():
+            if compareEncrypted(password.encode(), passw.encode()):
+                print("Usuario encontrado")
+                bandera = True
+                return bandera, id
+            else:
+                print("Usuario no encontrado")
+                bandera = False
+                id = -1
+                return bandera, id
+        connection.commit()
+        cur.close()
+    except Exception as e:
+        print(e)
+        bandera = False
+        id = -1
+        return bandera, id
+
 # LOGIN
+
+
 @app.route('/api/auth/', methods=['POST'])
 def login():
     try:
         # Obtenemos los datos que manda postman desde json
         user = request.json['username']
         password = request.json['password']
-        print(password)
 
         # Procedemos a invocar el query de la db para validar el login
         query = 'SELECT * from proyecto1.getUsuario(%s)'
@@ -235,7 +262,7 @@ def createFile():
 
         # Despues de subir al s3 agregamos a la db
         query = 'CALL proyecto1.addArchivo(%s, %s, %s, %s, %s, 0)'
-        params = [nombre, fileURL, mimeType, numAcceso, id_usuario]
+        params = [nombreFinal, fileURL, mimeType, numAcceso, id_usuario]
         cur = connection.cursor()
         cur.execute(query, params)
         connection.commit()
@@ -245,6 +272,44 @@ def createFile():
     except Exception as e:
         print(e)
         response = {'message:' 'No se pudo agregar el archivo'}
+        return jsonify(response)
+
+
+@app.route('/api/file/', methods=['DELETE'])
+def deleteFile():
+
+    # Obtenemos las variables de entorno para conectarnos al s3
+    s3Client = boto3.client('s3', aws_access_key_id=os.getenv('AWS_ID_PASSWORD'),
+                            aws_secret_access_key=os.getenv('AWS_PASSWORD'))
+    bucket_name = os.getenv('AWS_S3_NAME')
+
+    try:
+        # Obtenemos los valores json del endpoint
+        password = request.json['password']
+        username = request.json['username']
+        nombreArchivo = request.json['nombreArchivo']
+
+        # Si el login pasa, entonces hace el query para borrar el archivo
+        function = loginForDeleteFiles(username, password)
+        bandera = function[0]
+        idUsuario = function[1]
+
+        if bandera:
+            query2 = 'CALL proyecto1.deleteArchivo(%s, %s, 1)'
+            params2 = [nombreArchivo, idUsuario]
+            cur2 = connection.cursor()
+            cur2.execute(query2, params2)
+            connection.commit()
+            cur2.close()
+
+            # Si se elimino de la db lo unico que queda por hacer es borrarlo del s3
+            res = s3Client.delete_object(Bucket=bucket_name, Key=nombreArchivo)
+            response = {'message': 'Archivo eliminado con exito'}
+            return jsonify(response)
+
+    except Exception as e:
+        print(e)
+        response = {'message': 'No se pudo borrar el archivo'}
         return jsonify(response)
 
 
