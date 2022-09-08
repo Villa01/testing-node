@@ -1,3 +1,5 @@
+import json
+from logging import exception
 from flask import Flask
 from flask import request
 from flask_cors import CORS
@@ -107,6 +109,8 @@ def getFilesByID(idUsuario, acceso, nombreArchivo):
         return jsonify(response)
 
 # LOGIN
+
+
 @app.route('/api/auth/', methods=['POST'])
 def login():
     try:
@@ -141,6 +145,8 @@ def login():
         return jsonify(response)
 
 # OBTENER USUARIOS POR NOMBRE
+
+
 @app.route('/api/users/<user>', methods=['GET'])
 def getUsersByName(user):
     try:
@@ -175,6 +181,8 @@ def getUsersByName(user):
         return jsonify(response)
 
 # CREAR USUARIOS
+
+
 @app.route('/api/users/', methods=['POST'])
 def createUser():
     load_dotenv()
@@ -229,6 +237,8 @@ def createUser():
         return jsonify(response)
 
 # CREAR ARCHIVOS
+
+
 @app.route('/api/file/', methods=['POST'])
 def createFile():
     load_dotenv()
@@ -269,7 +279,7 @@ def createFile():
         # Ahora se envia al s3
         transfer = S3Transfer(s3Client)
         if acceso == "publico":
-            transfer.upload_file(uploadPath, bucket, nombreFinal, ExtraArgs={
+            transfer.upload_file(uploadPath, bucket, nombreFinal, extra_args={
                                  'ACL': 'public-read'})
             numAcceso = 0
         elif acceso == "privado":
@@ -337,6 +347,8 @@ def deleteFile():
         return jsonify(response)
 
 # OBTENER ARCHIVOS POR ID
+
+
 @app.route('/api/file/', methods=['GET'])
 def getFiles():
     try:
@@ -490,6 +502,34 @@ def getAllUser(idUsuario):
         print(e)
         response = {
             'message': 'No se encontro nada relacionado al id ' + idUsuario}
+        return jsonify(response)
+
+
+# OBTENER ARCHIVOS PUBLICOS
+@app.route('/api/file/public/<idUsuario>', methods=['GET'])
+def getPublicFiles(idUsuario):
+    try:
+        # Invocamos el query para buscar los archivos publicos de los amigos agregados al usuario
+        query = 'SELECT * FROM proyecto1.getArchivos(%s)'
+        params = [idUsuario]
+        cur = connection.cursor()
+        cur.execute(query, params)
+        connection.commit()
+        rows = []
+        for id, username, nombre, tipo, url in cur.fetchall():
+            response = {}
+            response['id'] = id
+            response['nombre'] = nombre
+            response['tipo'] = tipo
+            response['url'] = url
+            rows.append(response)
+        cur.close()
+        response2 = {'archivos': rows}
+        return jsonify(response2)
+    except Exception as e:
+        print(e)
+        response = {
+            'message': 'No se pudo obtener los archivos publicos de los amigos del usuario ' + idUsuario}
         return jsonify(response)
 
 
