@@ -107,8 +107,6 @@ def getFilesByID(idUsuario, acceso, nombreArchivo):
         return jsonify(response)
 
 # LOGIN
-
-
 @app.route('/api/auth/', methods=['POST'])
 def login():
     try:
@@ -143,8 +141,6 @@ def login():
         return jsonify(response)
 
 # OBTENER USUARIOS POR NOMBRE
-
-
 @app.route('/api/users/<user>', methods=['GET'])
 def getUsersByName(user):
     try:
@@ -179,8 +175,6 @@ def getUsersByName(user):
         return jsonify(response)
 
 # CREAR USUARIOS
-
-
 @app.route('/api/users/', methods=['POST'])
 def createUser():
     load_dotenv()
@@ -235,8 +229,6 @@ def createUser():
         return jsonify(response)
 
 # CREAR ARCHIVOS
-
-
 @app.route('/api/file/', methods=['POST'])
 def createFile():
     load_dotenv()
@@ -345,8 +337,6 @@ def deleteFile():
         return jsonify(response)
 
 # OBTENER ARCHIVOS POR ID
-
-
 @app.route('/api/file/', methods=['GET'])
 def getFiles():
     try:
@@ -372,9 +362,9 @@ def getFiles():
         cur = connection.cursor()
         cur.execute(query, params)
         connection.commit()
-        response = {}
         rows = []
         for id, nombre, url, tipo in cur.fetchall():
+            response = {}
             response['id'] = id
             response['nombre'] = nombre
             response['url'] = url
@@ -451,15 +441,15 @@ def editFiles():
         return jsonify(response)
 
 
-#AGREGAR AMIGOS
+# AGREGAR AMIGOS
 @app.route('/api/users/add/', methods=['POST'])
 def addFriend():
     try:
-        #Obtenemos los valores del json
+        # Obtenemos los valores del json
         idUsuarioActual = request.json['idUsuarioActual']
         idAmigo = request.json['idAmigo']
 
-        #Invocamos el query
+        # Invocamos el query
         query = 'CALL proyecto1.addFriend(%s, %s, 0)'
         params = [idUsuarioActual, idAmigo]
         cur = connection.cursor()
@@ -473,6 +463,35 @@ def addFriend():
         print(e)
         response = {'message': 'No se pudo agregar al amigo'}
         return jsonify(response)
+
+
+# OBTENER TODOS LOS USUARIOS
+@app.route('/api/users/all/<idUsuario>', methods=['GET'])
+def getAllUser(idUsuario):
+    try:
+        # Invocamos al query
+        query = 'SELECT * FROM proyecto1.getUsers(%s)'
+        params = [idUsuario]
+        cur = connection.cursor()
+        cur.execute(query, params)
+        connection.commit()
+        rows = []
+        for id, username, perfil, archivos in cur.fetchall():
+            response = {}
+            response['id'] = id
+            response['username'] = username
+            response['perfil'] = perfil
+            response['archivos'] = archivos
+            rows.append(response)
+        cur.close()
+        response2 = {'usuarios': rows}
+        return jsonify(response2)
+    except Exception as e:
+        print(e)
+        response = {
+            'message': 'No se encontro nada relacionado al id ' + idUsuario}
+        return jsonify(response)
+
 
 if __name__ == '__main__':
     # Error Handlers
