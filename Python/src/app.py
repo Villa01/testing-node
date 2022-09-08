@@ -1,18 +1,14 @@
-import json
-from logging import exception
-from flask import Flask
-from flask import request
-from flask_cors import CORS
 import os
 import psycopg2
 import boto3
 import bcrypt
 import uuid
 import magic
+from flask import Flask, request, jsonify
 from boto3.s3.transfer import S3Transfer
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
-from flask import jsonify
+from healthcheck import HealthCheck
 
 
 app = Flask(__name__)
@@ -108,9 +104,8 @@ def getFilesByID(idUsuario, acceso, nombreArchivo):
         response = {'message': 'No se encontro ningun archivo'}
         return jsonify(response)
 
+
 # LOGIN
-
-
 @app.route('/api/auth/', methods=['POST'])
 def login():
     try:
@@ -144,9 +139,8 @@ def login():
             'message': 'No se encontró al usuario ingresado, intente nuevamente'}
         return jsonify(response)
 
+
 # OBTENER USUARIOS POR NOMBRE
-
-
 @app.route('/api/users/<user>', methods=['GET'])
 def getUsersByName(user):
     try:
@@ -180,9 +174,8 @@ def getUsersByName(user):
             'message': 'No se encontró al usuario ingresado, intente nuevamente'}
         return jsonify(response)
 
+
 # CREAR USUARIOS
-
-
 @app.route('/api/users/', methods=['POST'])
 def createUser():
     load_dotenv()
@@ -236,9 +229,8 @@ def createUser():
         response = {'message': 'No se pudo agregar el usuario'}
         return jsonify(response)
 
+
 # CREAR ARCHIVOS
-
-
 @app.route('/api/file/', methods=['POST'])
 def createFile():
     load_dotenv()
@@ -309,6 +301,7 @@ def createFile():
         return jsonify(response)
 
 
+# ELIMINAR ARCHIVOS
 @app.route('/api/file/', methods=['DELETE'])
 def deleteFile():
 
@@ -346,9 +339,8 @@ def deleteFile():
         response = {'message': 'No se pudo borrar el archivo'}
         return jsonify(response)
 
+
 # OBTENER ARCHIVOS POR ID
-
-
 @app.route('/api/file/', methods=['GET'])
 def getFiles():
     try:
@@ -531,6 +523,14 @@ def getPublicFiles(idUsuario):
         response = {
             'message': 'No se pudo obtener los archivos publicos de los amigos del usuario ' + idUsuario}
         return jsonify(response)
+
+
+# HEALTH CHECK
+@app.route('/healthcheck', methods=['GET'])
+def healthcheck():
+    health = HealthCheck()
+    response = {'message': health.run()}
+    return jsonify(response)
 
 
 if __name__ == '__main__':
