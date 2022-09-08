@@ -9,9 +9,12 @@ from boto3.s3.transfer import S3Transfer
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
 from healthcheck import HealthCheck
+from flask_cors import CORS
 
 
+# Traemos CORS para poderlo usar con el frontend
 app = Flask(__name__)
+CORS(app)
 
 # Conectando a la db de postgres
 try:
