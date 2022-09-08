@@ -1,8 +1,3 @@
-from distutils.command.upload import upload
-import json
-from logging import exception
-import mimetypes
-from sqlite3 import connect
 from flask import Flask
 from flask import request
 from flask_cors import CORS
@@ -455,6 +450,29 @@ def editFiles():
         response = {'message': 'No se pudo modificar el archivo'}
         return jsonify(response)
 
+
+#AGREGAR AMIGOS
+@app.route('/api/users/add/', methods=['POST'])
+def addFriend():
+    try:
+        #Obtenemos los valores del json
+        idUsuarioActual = request.json['idUsuarioActual']
+        idAmigo = request.json['idAmigo']
+
+        #Invocamos el query
+        query = 'CALL proyecto1.addFriend(%s, %s, 0)'
+        params = [idUsuarioActual, idAmigo]
+        cur = connection.cursor()
+        cur.execute(query, params)
+        connection.commit()
+        cur.close()
+        response = {'message': 'Amigo agregado con exito'}
+        return jsonify(response)
+
+    except Exception as e:
+        print(e)
+        response = {'message': 'No se pudo agregar al amigo'}
+        return jsonify(response)
 
 if __name__ == '__main__':
     # Error Handlers
