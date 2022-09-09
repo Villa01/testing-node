@@ -32,10 +32,15 @@ router.post('/', [
 ],
     createFile);
 
-router.get('/', [
-    check('idUsuario', 'Se necesita el idUsuario').notEmpty(),
+router.get('/:acceso/:idUsuario', [
+    param('idUsuario', 'Se necesita el idUsuario').notEmpty(),
     validateAtributes,
-    getAcceso,
+    (req, res, next) => {
+        const acceso = req.params.acceso;
+        req.params.acceso = accesoArchivos[acceso];
+        next();
+    }
+
 ],
     getArchivos
 );

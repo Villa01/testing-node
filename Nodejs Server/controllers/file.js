@@ -43,7 +43,7 @@ const createFile = async (req = request, res = response) => {
 
 const getArchivos = async (req = request, res = response) => {
 
-    const { idUsuario, acceso = accesoArchivos.todos } = req.body;
+    const { idUsuario, acceso = accesoArchivos.todos } = req.params;
     //select * from proyecto1.getArchivo(id, acceso); No pude usar el sp :(
 
     const query = `select * from proyecto1.getArchivo($1,$2);`;
