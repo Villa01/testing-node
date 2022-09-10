@@ -18,7 +18,6 @@ const s3 = new AWS.S3({
 
 const uploadFile = (filename, fileData) => {
     const name = uuidv4() + filename;
-    console.log(name);
     const params = {
         Bucket: credentials.BUCKET_NAME,
         Key: name,

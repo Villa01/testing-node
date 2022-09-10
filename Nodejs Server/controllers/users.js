@@ -19,7 +19,7 @@ const createUser = async (req = request, res = response) => {
     const nombreArchivo = `${username.replace(/[^\w\s]/gi, '')}-profile${extension}`;
 
     try {
-        const urlPerfil = await uploadFile(nombreArchivo, fotoPerfil.data);
+        const {url: urlPerfil, nombre} = await uploadFile(nombreArchivo, fotoPerfil.data);
 
         const query = 'CALL proyecto1.addUsuario($1, $2, $3, $4, 0)';
         const params = [username, email, encrypted_pass, urlPerfil];
@@ -32,7 +32,7 @@ const createUser = async (req = request, res = response) => {
 
         return res.status(201).json({ msg: 'Usuario creado con exito.' });
     } catch (err) {
-        console.error(err.error);
+        console.error(err);
         return res.status(500).json({
             msg: 'No se pudo insertar el usuario, consulte con el administrador. '
         })
