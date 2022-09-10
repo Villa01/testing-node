@@ -32,6 +32,14 @@ router.post('/', [
 ],
     createFile);
 
+router.get('/publico/:idUsuario', [
+    param('idUsuario', 'Se necesita el idUsuario').notEmpty(),
+    validateAtributes,
+    getAcceso,
+],
+    getPublicFiles
+);
+
 router.get('/:acceso/:idUsuario', [
     param('idUsuario', 'Se necesita el idUsuario').notEmpty(),
     validateAtributes,
@@ -43,14 +51,6 @@ router.get('/:acceso/:idUsuario', [
 
 ],
     getArchivos
-);
-
-router.get('/public/:idUsuario', [
-    param('idUsuario', 'Se necesita el idUsuario').notEmpty(),
-    validateAtributes,
-    getAcceso,
-],
-    getPublicFiles
 );
 
 router.delete('/', [

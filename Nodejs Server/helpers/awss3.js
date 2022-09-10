@@ -17,7 +17,7 @@ const s3 = new AWS.S3({
 
 
 const uploadFile = (filename, fileData) => {
-    const name = uuidv4() + filename;
+    const name = uuidv4() + '_' + filename;
     const params = {
         Bucket: credentials.BUCKET_NAME,
         Key: name,
@@ -36,6 +36,24 @@ const uploadFile = (filename, fileData) => {
 }
 
 
+const deleteFile = (fileName) => {
+    const params = {
+        Bucket: credentials.BUCKET_NAME,
+        Key: fileName,
+    }
+    return new Promise((resolve, reject) => {
+    
+        s3.deleteObject(params, (err) => {
+            if (err) {
+                reject(err)
+            }
+            resolve({ msg : 'Eliminador con exito' });
+        })
+
+    })
+}
+
 module.exports = {
-    uploadFile
+    uploadFile,
+    deleteFile
 }

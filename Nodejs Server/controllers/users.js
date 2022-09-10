@@ -93,6 +93,7 @@ const getUserByUsername = async(req = request, res = response) => {
     }
 }
 
+// Obtiene todos los usuarios disponibles para agregarlos. 
 const getAllUsers = async (req = request, res = response) => { 
 
     const { idUsuario } = req.params;
@@ -103,12 +104,6 @@ const getAllUsers = async (req = request, res = response) => {
     try {
         const client = await dbConnection();
         const user = await client.query(query, params);
-
-        if (user.rowCount < 1) {
-            return res.status(404).json({
-                msg: `No se encontró ningún usuario asociado al username ${idUsuario}`
-            })
-        }
 
         return res.status(200).json({usuarios: user.rows});
     } catch (err) {

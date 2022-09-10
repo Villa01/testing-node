@@ -2,7 +2,7 @@ const { request, response } = require('express');
 
 const { dbConnection } = require('../database/config');
 const { logIn } = require('../helpers/auth');
-const { uploadFile } = require('../helpers/awss3');
+const { uploadFile, deleteFile } = require('../helpers/awss3');
 const { accesoArchivos } = require('../middlewares/archivos');
 
 const createFile = async (req = request, res = response) => {
@@ -10,9 +10,9 @@ const createFile = async (req = request, res = response) => {
     // Subir archivo a s3
     const file = req.files.file;
 
-    const { nombre = file.name, acceso = accesoArchivos.publico, idUsuario } = req.body;
+    const { acceso = accesoArchivos.publico, idUsuario } = req.body;
     try {
-        const {url: urlPerfil} = await uploadFile(file.name, file.data);
+        const {url: urlPerfil, nombre} = await uploadFile(file.name, file.data);
         // CALL proyecto1.addArchivo(nombre, url, tipo, acceso, usuario, retorno)
         const query = 'CALL proyecto1.addArchivo($1, $2, $3, $4, $5, 0)';
         const params = [nombre, urlPerfil, file.mimetype, acceso, idUsuario];
@@ -71,8 +71,8 @@ const getArchivos = async (req = request, res = response) => {
 
 
 const getPublicFiles = async (req = request, res = response) => {
-
     const { idUsuario } = req.params;
+    console.log("🚀 ~ file: file.js ~ line 75 ~ getPublicFiles ~ idUsuario", idUsuario)
 
     const query = `select * from proyecto1.getArchivos($1);`;
     const params = [idUsuario];
@@ -81,7 +81,7 @@ const getPublicFiles = async (req = request, res = response) => {
         // Insertar en la base de datos
         const client = await dbConnection();
         const { rows } = await client.query(query, params);
-
+        
         return res.status(200).json({ archivos: rows });
     } catch (err) {
         console.error(err);
@@ -94,6 +94,9 @@ const getPublicFiles = async (req = request, res = response) => {
 const deleteArchivo = async (req = request, res = response) => {
 
     const { username, password, nombreArchivo } = req.body;
+    console.log("🚀 ~ file: file.js ~ line 97 ~ deleteArchivo ~ req.body", req.body)
+
+    
 
     let idUsuario;
     try {
@@ -112,6 +115,8 @@ const deleteArchivo = async (req = request, res = response) => {
         // console.log("🚀 ~ file: file.js ~ line 91 ~ deleteArchivo ~ query", query)
         const params = [nombreArchivo, idUsuario];
         // console.log("🚀 ~ file: file.js ~ line 93 ~ deleteArchivo ~ params", params)
+
+        const response = await deleteFile(nombreArchivo);
 
         // Eliminar en la base de datos
         const client = await dbConnection();
