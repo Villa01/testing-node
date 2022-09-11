@@ -190,6 +190,9 @@ def createUser():
     bucket = os.getenv('AWS_S3_NAME')
 
     try:
+        # Vamos a generar un unique id para el nombre del archivo para que no se repitan
+        uniqueID = uuid.uuid4()
+        
         # Obtenemos el body para poder agregar al usuario, menos la foto porque eso es aparte
         user = request.form['username']
         email = request.form['email']
@@ -209,14 +212,14 @@ def createUser():
             "/", ""), secure_filename(perfil.filename))
         extension = "." + uploadPath.split('.')[-1]
         perfil.save(uploadPath)
-        fotoUsuario = user + "-profile" + extension
+        fotoUsuario = str(uniqueID) + "_" + user + "-profile" + extension
 
         # Ahora se envia al s3
         transfer = S3Transfer(s3Client)
-        transfer.upload_file(uploadPath, bucket, fotoUsuario,
-                             ExtraArgs={'ACL': 'public-read'})
-        fileURL = '%s/%s/%s' % (s3Client.meta.endpoint_url,
-                                bucket, fotoUsuario)
+        transfer.upload_file(uploadPath, bucket, fotoUsuario)
+        urlWithHTTP = (s3Client.meta.endpoint_url)
+        urlWithoutHTTP = urlWithHTTP.replace("https://", "") 
+        fileURL = "https://%s.%s/%s" % (bucket, urlWithoutHTTP, fotoUsuario)
         os.remove(uploadPath)
 
         # Despues de subir al s3 agregamos a la db
@@ -269,7 +272,8 @@ def createFile():
         mimeType = magic.from_file(uploadPath, mime=True)
 
         # Vamos a ponerle un nombre a nuestro archivo, que tiene el uuid4, nombre que obtenemos de la peticion post y su extension
-        nombreFinal = str(uniqueID) + nombre + extension
+        # Además le vamos a agregar un guión bajo entre el uuid4 y el nombre
+        nombreFinal = str(uniqueID) + "_" + nombre + extension
 
         # Ahora se envia al s3
         transfer = S3Transfer(s3Client)
@@ -285,8 +289,9 @@ def createFile():
                 'message:': 'Defina el acceso por favor como publico o privado'}
             return jsonify(response)
 
-        fileURL = '%s/%s/%s' % (s3Client.meta.endpoint_url,
-                                bucket, nombreFinal)
+        urlWithHTTP = (s3Client.meta.endpoint_url)
+        urlWithoutHTTP = urlWithHTTP.replace("https://", "") 
+        fileURL = "https://%s.%s/%s" % (bucket, urlWithoutHTTP, nombreFinal)
         os.remove(uploadPath)
 
         # Despues de subir al s3 agregamos a la db
@@ -343,8 +348,8 @@ def deleteFile():
         return jsonify(response)
 
 
-# OBTENER ARCHIVOS POR ID
-@app.route('/api/file/', methods=['GET'])
+# OBTENER ARCHIVOS DE AMIGOS POR ID
+@app.route('/api/file/publico', methods=['GET'])
 def getFiles():
     try:
         # Obtenemos los datos del json
@@ -418,10 +423,14 @@ def editFiles():
         bandera = function[0]
         idUsuario = function[1]
 
+        # Vamos a darle un nuevo uuid4 al archivo que vamos a agregar
+        uniqueID = uuid.uuid4()
+        newNameForFile = str(uniqueID) + "_" + nombreNuevo
+
         # Si el login devuelve verdadero, entonces invocamos el query para updatear archivos
         if bandera:
             query = 'CALL proyecto1.updateArchivo(%s, %s, %s, %s, 0)'
-            params = [nombreArchivo, idUsuario, nombreNuevo, accesoFinal]
+            params = [nombreArchivo, idUsuario, newNameForFile, accesoFinal]
             cur = connection.cursor()
             cur.execute(query, params)
             connection.commit()
@@ -431,7 +440,7 @@ def editFiles():
             # Vamos a copiar el archivo viejo y renombrarlo en el s3
             copy_source = bucket_name + "/" + nombreArchivo
             s3Client.copy_object(Bucket=bucket_name,
-                                 CopySource=copy_source, Key=nombreNuevo)
+                                 CopySource=copy_source, Key=newNameForFile)
 
             # Ahora borramos del s3 el archivo viejo definitivamente
             s3Client.delete_object(Bucket=bucket_name, Key=nombreArchivo)
