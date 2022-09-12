@@ -12,9 +12,26 @@ from healthcheck import HealthCheck
 from flask_cors import CORS
 
 
-# Traemos CORS para poderlo usar con el frontend
+# Traemos CORS para poderlo usar con el fpip install python-dotenvrontend
 app = Flask(__name__)
 CORS(app)
+
+# Conectando a la db de postgres
+try:
+    # Vamos a traer las variables de entorno al .env
+    load_dotenv()
+    connection = psycopg2.connect(
+        host=os.getenv('PG_HOST'),
+        user=os.getenv('PG_USER'),
+        password=os.getenv('PG_PASSWORD'),
+        database=os.getenv('PG_DATABASE'),
+        port='5432'
+    )
+
+    print("Conexion exitosa")
+
+except Exception as ex:
+    print(ex)
 
 # Conectando a la db de postgres
 try:
@@ -197,6 +214,7 @@ def createUser():
         user = request.form['username']
         email = request.form['email']
         password = request.form['password']
+        confirmationPass = request.form['password2']
         perfil = request.files['perfil']
         encryptedPass = encrypt(password.encode())
 
@@ -214,24 +232,32 @@ def createUser():
         perfil.save(uploadPath)
         fotoUsuario = str(uniqueID) + "_" + user + "-profile" + extension
 
-        # Ahora se envia al s3
-        transfer = S3Transfer(s3Client)
-        transfer.upload_file(uploadPath, bucket, fotoUsuario)
-        urlWithHTTP = (s3Client.meta.endpoint_url)
-        urlWithoutHTTP = urlWithHTTP.replace("https://", "") 
-        fileURL = "https://%s.%s/%s" % (bucket, urlWithoutHTTP, fotoUsuario)
-        os.remove(uploadPath)
+        # Validamos que ambas contraseñas son iguales
+        if password == confirmationPass:
+            # Ahora se envia al s3
+            transfer = S3Transfer(s3Client)
+            transfer.upload_file(uploadPath, bucket, fotoUsuario)
+            urlWithHTTP = (s3Client.meta.endpoint_url)
+            urlWithoutHTTP = urlWithHTTP.replace("https://", "") 
+            fileURL = "https://%s.%s/%s" % (bucket, urlWithoutHTTP, fotoUsuario)
+            os.remove(uploadPath)
 
-        # Despues de subir al s3 agregamos a la db
-        query = 'CALL proyecto1.addUsuario(%s, %s, %s, %s, 0)'
-        params = [user, email, encryptedPass.decode("utf-8"), fileURL]
-        cur = connection.cursor()
-        cur.execute(query, params)
-        connection.commit()
-        cur.close()
-        response = {'message': 'Usuario creado con exito'}
-        return jsonify(response)
+            # Despues de subir al s3 agregamos a la db
+            query = 'CALL proyecto1.addUsuario(%s, %s, %s, %s, 0)'
+            params = [user, email, encryptedPass.decode("utf-8"), fileURL]
+            cur = connection.cursor()
+            cur.execute(query, params)
+            connection.commit()
+            cur.close()
+            response = {'message': 'Usuario creado con exito'}
+            return jsonify(response)
+
+        else:
+            response = {'message': 'Las contraseñas no son iguales. Vuelva a intentarlo'}
+            return jsonify(response)
+
     except Exception as e:
+        print(e)
         response = {'message': 'No se pudo agregar el usuario'}
         return jsonify(response)
 
