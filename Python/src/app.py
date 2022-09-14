@@ -215,7 +215,7 @@ def createUser():
         email = request.form['email']
         password = request.form['password']
         confirmationPass = request.form['password2']
-        perfil = request.files['perfil']
+        perfil = request.files['fotoPerfil']
         encryptedPass = encrypt(password.encode())
 
         # Mandamos a crear un folder llamado file donde meteremos las imagenes
@@ -278,9 +278,9 @@ def createFile():
     try:
         # Obtenemos el body para agregar el archivo al s3 y a la db
         nombre = request.form['nombre']
-        url = request.files['url']
+        url = request.files['file']
         acceso = request.form['acceso']
-        id_usuario = request.form['id_usuario']
+        id_usuario = request.form['idUsuario']
 
         try:
             os.stat(os.path.dirname(__file__) + os.getenv('UPLOAD_PATH'))
@@ -401,11 +401,11 @@ def getFiles():
         cur.execute(query, params)
         connection.commit()
         rows = []
-        for id, nombre, url, tipo in cur.fetchall():
+        for id, nombre, file, tipo in cur.fetchall():
             response = {}
             response['id'] = id
             response['nombre'] = nombre
-            response['url'] = url
+            response['file'] = file
             response['tipo'] = tipo
             rows.append(response)
         cur.close()
