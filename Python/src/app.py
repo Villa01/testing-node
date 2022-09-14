@@ -140,12 +140,12 @@ def login():
         cur.execute(query, params)
         connection.commit()
         response = {}
-        for id, username, email, passw, perfil in cur.fetchall():
+        for id, username, email, passw, fotoPerfil in cur.fetchall():
             if compareEncrypted(password.encode(), passw.encode()):
                 response['id'] = id
                 response['username'] = username
                 response['email'] = email
-                response['perfil'] = perfil
+                response['fotoPerfil'] = fotoPerfil
                 print("Usuario encontrado")
             else:
                 response = {
@@ -174,13 +174,13 @@ def getUsersByName(user):
         cur.execute(query, params)
         connection.commit()
         response = {}
-        for id, username, email, passw, perfil in cur.fetchall():
+        for id, username, email, passw, fotoPerfil in cur.fetchall():
             if user == username:
                 response['id'] = id
                 response['username'] = username
                 response['email'] = email
                 response['password'] = passw
-                response['perfil'] = perfil
+                response['fotoPerfil'] = fotoPerfil
                 print("Usuario encontrado")
             else:
                 response = {
@@ -518,11 +518,11 @@ def getAllUser(idUsuario):
         cur.execute(query, params)
         connection.commit()
         rows = []
-        for id, username, perfil, archivos in cur.fetchall():
+        for id, username, fotoPerfil, archivos in cur.fetchall():
             response = {}
             response['id'] = id
             response['username'] = username
-            response['perfil'] = perfil
+            response['fotoPerfil'] = fotoPerfil
             response['archivos'] = archivos
             rows.append(response)
         cur.close()
@@ -546,12 +546,12 @@ def getPublicFiles(idUsuario):
         cur.execute(query, params)
         connection.commit()
         rows = []
-        for id, username, nombre, tipo, url in cur.fetchall():
+        for id, username, nombre, tipo, file in cur.fetchall():
             response = {}
             response['id'] = id
             response['nombre'] = nombre
             response['tipo'] = tipo
-            response['url'] = url
+            response['url'] = file
             rows.append(response)
         cur.close()
         response2 = {'archivos': rows}
