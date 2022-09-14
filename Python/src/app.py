@@ -122,7 +122,7 @@ def getFilesByID(idUsuario, acceso, nombreArchivo):
     except Exception as e:
         print(e)
         response = {'message': 'No se encontro ningun archivo'}
-        return jsonify(response)
+        return jsonify(response), 400
 
 
 # LOGIN
@@ -140,24 +140,29 @@ def login():
         cur.execute(query, params)
         connection.commit()
         response = {}
-        for id, username, email, passw, fotoPerfil in cur.fetchall():
+        rows = []
+        for id, username, email, passw, perfil in cur.fetchall():
             if compareEncrypted(password.encode(), passw.encode()):
                 response['id'] = id
                 response['username'] = username
                 response['email'] = email
-                response['fotoPerfil'] = fotoPerfil
+                response['perfil'] = perfil
+                rows.append(response)
                 print("Usuario encontrado")
             else:
                 response = {
-                    'message:' 'No se encontró al usuario asociado al username ' + user}
+                    'message': 'No se encontró al usuario asociado al username ' + user}
                 print("Usuario no encontrado")
-
+                cur.close()
+                return jsonify(response), 404
+        response2 = {'data': rows}
         cur.close()
-        return jsonify(response)
+        return jsonify(response2)
     except Exception as e:
         response = {
-            'message': 'No se encontró al usuario ingresado, intente nuevamente'}
-        return jsonify(response)
+            'message': 'No se encontró al usuario ingresado, intente nuevamente',
+            'error': str(e)}
+        return jsonify(response), 400
 
 
 # OBTENER USUARIOS POR NOMBRE
@@ -174,25 +179,27 @@ def getUsersByName(user):
         cur.execute(query, params)
         connection.commit()
         response = {}
-        for id, username, email, passw, fotoPerfil in cur.fetchall():
+        for id, username, email, passw, perfil in cur.fetchall():
             if user == username:
                 response['id'] = id
                 response['username'] = username
                 response['email'] = email
                 response['password'] = passw
-                response['fotoPerfil'] = fotoPerfil
+                response['perfil'] = perfil
                 print("Usuario encontrado")
             else:
                 response = {
-                    'message:' 'No se encontró al usuario asociado al username ' + user}
+                    'message': 'No se encontró al usuario asociado al username ' + user}
                 print("Usuario no encontrado")
-
+                cur.close()
+                return jsonify(response), 404
         cur.close()
         return jsonify(response)
     except Exception as e:
         response = {
-            'message': 'No se encontró al usuario ingresado, intente nuevamente'}
-        return jsonify(response)
+            'message': 'No se encontró al usuario ingresado, intente nuevamente',
+            'error': str(e)}
+        return jsonify(response), 400
 
 
 # CREAR USUARIOS
@@ -254,12 +261,13 @@ def createUser():
 
         else:
             response = {'message': 'Las contraseñas no son iguales. Vuelva a intentarlo'}
-            return jsonify(response)
+            return jsonify(response), 404
 
     except Exception as e:
         print(e)
-        response = {'message': 'No se pudo agregar el usuario'}
-        return jsonify(response)
+        response = {'message': 'No se pudo agregar el usuario',
+                    'error': str(e)}
+        return jsonify(response), 400
 
 
 # CREAR ARCHIVOS
@@ -312,8 +320,8 @@ def createFile():
             numAcceso = 1
         else:
             response = {
-                'message:': 'Defina el acceso por favor como publico o privado'}
-            return jsonify(response)
+                'message': 'Defina el acceso por favor como publico o privado'}
+            return jsonify(response), 403
 
         urlWithHTTP = (s3Client.meta.endpoint_url)
         urlWithoutHTTP = urlWithHTTP.replace("https://", "") 
@@ -331,8 +339,9 @@ def createFile():
         return jsonify(response)
     except Exception as e:
         print(e)
-        response = {'message:' 'No se pudo agregar el archivo'}
-        return jsonify(response)
+        response = {'message': 'No se pudo agregar el archivo', 
+                    'error': str(e)}
+        return jsonify(response), 400
 
 
 # ELIMINAR ARCHIVOS
@@ -370,17 +379,18 @@ def deleteFile():
 
     except Exception as e:
         print(e)
-        response = {'message': 'No se pudo borrar el archivo'}
-        return jsonify(response)
+        response = {'message': 'No se pudo borrar el archivo',
+                    'error': str(e)}
+        return jsonify(response), 400
 
 
 # OBTENER ARCHIVOS DE AMIGOS POR ID
-@app.route('/api/file/publico', methods=['GET'])
-def getFiles():
+@app.route('/api/file/<acceso>/<idUsuario>', methods=['GET'])
+def getFiles(acceso, idUsuario):
     try:
-        # Obtenemos los datos del json
-        idUsuario = request.json['idUsuario']
-        acceso = request.json['acceso']
+        #Un ejemplo de archivo publico es /api/file/publico/41
+        # Otro sería por ejemplo /api/file/privado/57
+        # En frontend se debe de especificar el acceso y el id del usuario para mandarlo al backend en la URL
 
         # Acceso en 0 es publico, en 1 es privado y en 2 es todos, que busca todos los tipos de acceso
         if acceso == "publico":
@@ -392,7 +402,7 @@ def getFiles():
         else:
             response = {
                 'message': 'El acceso es publico, privado o todos. Intentelo nuevamente'}
-            return jsonify(response)
+            return jsonify(response), 403
 
         # Procedemos a hacer la query para buscar los archivos
         query = 'SELECT * FROM proyecto1.getArchivo(%s, %s)'
@@ -405,7 +415,7 @@ def getFiles():
             response = {}
             response['id'] = id
             response['nombre'] = nombre
-            response['file'] = file
+            response['url'] = file
             response['tipo'] = tipo
             rows.append(response)
         cur.close()
@@ -414,8 +424,9 @@ def getFiles():
 
     except Exception as e:
         print(e)
-        response = {'message': 'No se encontro ningun archivo'}
-        return jsonify(response)
+        response = {'message': 'No se encontro ningun archivo',
+                    'error': str(e)}
+        return jsonify(response), 400
 
 
 # EDITAR ARCHIVOS
@@ -442,7 +453,7 @@ def editFiles():
         else:
             response = {
                 'message': 'El acceso es publico o privado. Vuelva a intentar'}
-            return jsonify(response)
+            return jsonify(response), 403
 
         # Verificamos mediante la funcion login si el usuario existe
         function = loginForDeleteFiles(username, password)
@@ -475,12 +486,13 @@ def editFiles():
 
         else:
             response = {'message': 'No se pudo modificar el archivo'}
-            return jsonify(response)
+            return jsonify(response), 404
 
     except Exception as e:
         print(e)
-        response = {'message': 'No se pudo modificar el archivo'}
-        return jsonify(response)
+        response = {'message': 'No se pudo modificar el archivo',
+                    'error': str(e)}
+        return jsonify(response), 404
 
 
 # AGREGAR AMIGOS
@@ -504,7 +516,7 @@ def addFriend():
     except Exception as e:
         print(e)
         response = {'message': 'No se pudo agregar al amigo'}
-        return jsonify(response)
+        return jsonify(response), 400
 
 
 # OBTENER TODOS LOS USUARIOS
@@ -518,11 +530,11 @@ def getAllUser(idUsuario):
         cur.execute(query, params)
         connection.commit()
         rows = []
-        for id, username, fotoPerfil, archivos in cur.fetchall():
+        for id, username, perfil, archivos in cur.fetchall():
             response = {}
             response['id'] = id
             response['username'] = username
-            response['fotoPerfil'] = fotoPerfil
+            response['perfil'] = perfil
             response['archivos'] = archivos
             rows.append(response)
         cur.close()
@@ -531,8 +543,9 @@ def getAllUser(idUsuario):
     except Exception as e:
         print(e)
         response = {
-            'message': 'No se encontro nada relacionado al id ' + idUsuario}
-        return jsonify(response)
+            'message': 'No se encontro nada relacionado al id ' + idUsuario,
+            'error': str(e)}
+        return jsonify(response), 400
 
 
 # OBTENER ARCHIVOS PUBLICOS
@@ -559,8 +572,9 @@ def getPublicFiles(idUsuario):
     except Exception as e:
         print(e)
         response = {
-            'message': 'No se pudo obtener los archivos publicos de los amigos del usuario ' + idUsuario}
-        return jsonify(response)
+            'message': 'No se pudo obtener los archivos publicos de los amigos del usuario ' + idUsuario,
+            'error': str(e)}
+        return jsonify(response), 400
 
 
 # HEALTH CHECK
