@@ -32,7 +32,7 @@ router.post('/', [
 ],
     createFile);
 
-router.get('/publico/:idUsuario', [
+router.get('/amigos/:idUsuario', [
     param('idUsuario', 'Se necesita el idUsuario').notEmpty(),
     validateAtributes,
     getAcceso,

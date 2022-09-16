@@ -72,7 +72,7 @@ const getArchivos = async (req = request, res = response) => {
 
 const getPublicFiles = async (req = request, res = response) => {
     const { idUsuario } = req.params;
-    console.log("🚀 ~ file: file.js ~ line 75 ~ getPublicFiles ~ idUsuario", idUsuario)
+    // console.log("🚀 ~ file: file.js ~ line 75 ~ getPublicFiles ~ idUsuario", idUsuario)
 
     const query = `select * from proyecto1.getArchivos($1);`;
     const params = [idUsuario];
@@ -94,7 +94,7 @@ const getPublicFiles = async (req = request, res = response) => {
 const deleteArchivo = async (req = request, res = response) => {
 
     const { username, password, nombreArchivo } = req.body;
-    console.log("🚀 ~ file: file.js ~ line 97 ~ deleteArchivo ~ req.body", req.body)
+    // console.log("🚀 ~ file: file.js ~ line 97 ~ deleteArchivo ~ req.body", req.body)
 
     
 
