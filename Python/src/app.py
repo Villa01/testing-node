@@ -217,7 +217,7 @@ def createUser():
     try:
         # Vamos a generar un unique id para el nombre del archivo para que no se repitan
         uniqueID = uuid.uuid4()
-        
+
         # Obtenemos el body para poder agregar al usuario, menos la foto porque eso es aparte
         user = request.form['username']
         email = request.form['email']
@@ -244,10 +244,12 @@ def createUser():
         if password == confirmationPass:
             # Ahora se envia al s3
             transfer = S3Transfer(s3Client)
-            transfer.upload_file(uploadPath, bucket, fotoUsuario)
+            transfer.upload_file(uploadPath, bucket, fotoUsuario, extra_args={
+                                 'ACL': 'public-read'})
             urlWithHTTP = (s3Client.meta.endpoint_url)
-            urlWithoutHTTP = urlWithHTTP.replace("https://", "") 
-            fileURL = "https://%s.%s/%s" % (bucket, urlWithoutHTTP, fotoUsuario)
+            urlWithoutHTTP = urlWithHTTP.replace("https://", "")
+            fileURL = "https://%s.%s/%s" % (bucket,
+                                            urlWithoutHTTP, fotoUsuario)
             os.remove(uploadPath)
 
             # Despues de subir al s3 agregamos a la db
@@ -261,7 +263,8 @@ def createUser():
             return jsonify(response)
 
         else:
-            response = {'message': 'Las contraseñas no son iguales. Vuelva a intentarlo'}
+            response = {
+                'message': 'Las contraseñas no son iguales. Vuelva a intentarlo'}
             return jsonify(response), 404
 
     except Exception as e:
@@ -325,7 +328,7 @@ def createFile():
             return jsonify(response), 403
 
         urlWithHTTP = (s3Client.meta.endpoint_url)
-        urlWithoutHTTP = urlWithHTTP.replace("https://", "") 
+        urlWithoutHTTP = urlWithHTTP.replace("https://", "")
         fileURL = "https://%s.%s/%s" % (bucket, urlWithoutHTTP, nombreFinal)
         os.remove(uploadPath)
 
@@ -340,7 +343,7 @@ def createFile():
         return jsonify(response)
     except Exception as e:
         print(e)
-        response = {'message': 'No se pudo agregar el archivo', 
+        response = {'message': 'No se pudo agregar el archivo',
                     'error': str(e)}
         return jsonify(response), 400
 
@@ -386,33 +389,18 @@ def deleteFile():
 
 
 # OBTENER ARCHIVOS DE AMIGOS POR ID
-@app.route('/api/file/<acceso>/<idUsuario>', methods=['GET'])
-def getFiles(acceso, idUsuario):
+@app.route('/api/file/publico/<idUsuario>', methods=['GET'])
+def getFiles(idUsuario):
     try:
-        #Un ejemplo de archivo publico es /api/file/publico/41
-        # Otro sería por ejemplo /api/file/privado/57
-        # En frontend se debe de especificar el acceso y el id del usuario para mandarlo al backend en la URL
-
-        # Acceso en 0 es publico, en 1 es privado y en 2 es todos, que busca todos los tipos de acceso
-        if acceso == "publico":
-            accesoFinal = 0
-        elif acceso == "privado":
-            accesoFinal = 1
-        elif acceso == "todos":
-            accesoFinal = 2
-        else:
-            response = {
-                'message': 'El acceso es publico, privado o todos. Intentelo nuevamente'}
-            return jsonify(response), 403
-
         # Procedemos a hacer la query para buscar los archivos
-        query = 'SELECT * FROM proyecto1.getArchivo(%s, %s)'
-        params = [idUsuario, accesoFinal]
+        query = 'SELECT * FROM proyecto1.getArchivos(%s)'
+        params = [idUsuario]
+        print(params)
         cur = connection.cursor()
         cur.execute(query, params)
         connection.commit()
         rows = []
-        for id, nombre, file, tipo in cur.fetchall():
+        for id, username, nombre, tipo, file in cur.fetchall():
             response = {}
             response['id'] = id
             response['nombre'] = nombre
@@ -550,17 +538,33 @@ def getAllUser(idUsuario):
 
 
 # OBTENER ARCHIVOS PUBLICOS
-@app.route('/api/file/public/<idUsuario>', methods=['GET'])
-def getPublicFiles(idUsuario):
+@app.route('/api/file/<acceso>/<idUsuario>', methods=['GET'])
+def getPublicFiles(acceso, idUsuario):
     try:
+        # Un ejemplo de archivo publico es /api/file/publico/41
+        # Otro sería por ejemplo /api/file/privado/57
+        # En frontend se debe de especificar el acceso y el id del usuario para mandarlo al backend en la URL
+
+        # Acceso en 0 es publico, en 1 es privado y en 2 es todos, que busca todos los tipos de acceso
+        if acceso == "public":
+            accesoFinal = 0
+        elif acceso == "privado":
+            accesoFinal = 1
+        elif acceso == "todos":
+            accesoFinal = 2
+        else:
+            response = {
+                'message': 'El acceso es publico, privado o todos. Intentelo nuevamente'}
+            return jsonify(response), 403
+        
         # Invocamos el query para buscar los archivos publicos de los amigos agregados al usuario
-        query = 'SELECT * FROM proyecto1.getArchivos(%s)'
-        params = [idUsuario]
+        query = 'SELECT * FROM proyecto1.getArchivo(%s, %s)'
+        params = [idUsuario, accesoFinal]
         cur = connection.cursor()
         cur.execute(query, params)
         connection.commit()
         rows = []
-        for id, username, nombre, tipo, file in cur.fetchall():
+        for id, nombre, file, tipo in cur.fetchall():
             response = {}
             response['id'] = id
             response['nombre'] = nombre
