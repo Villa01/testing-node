@@ -320,7 +320,8 @@ def createFile():
                                  'ACL': 'public-read'})
             numAcceso = 0
         elif acceso == "privado":
-            transfer.upload_file(uploadPath, bucket, nombreFinal)
+            transfer.upload_file(uploadPath, bucket, nombreFinal, extra_args={
+                                 'ACL': 'public-read'})
             numAcceso = 1
         else:
             response = {
@@ -556,7 +557,7 @@ def getPublicFiles(acceso, idUsuario):
             response = {
                 'message': 'El acceso es publico, privado o todos. Intentelo nuevamente'}
             return jsonify(response), 403
-        
+
         # Invocamos el query para buscar los archivos publicos de los amigos agregados al usuario
         query = 'SELECT * FROM proyecto1.getArchivo(%s, %s)'
         params = [idUsuario, accesoFinal]
