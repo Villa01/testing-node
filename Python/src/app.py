@@ -155,10 +155,11 @@ def login():
                 print("Usuario no encontrado")
                 cur.close()
                 return jsonify(response), 404
-        response2 = {'data': rows}
+        response2 = {'data': rows[0]}
         cur.close()
         return jsonify(response2)
     except Exception as e:
+        print(e)
         response = {
             'message': 'No se encontró al usuario ingresado, intente nuevamente',
             'error': str(e)}
