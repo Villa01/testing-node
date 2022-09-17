@@ -11,14 +11,15 @@ const createFile = async (req = request, res = response) => {
     const file = req.files.file;
 
     const { acceso = accesoArchivos.publico, idUsuario } = req.body;
+    let client;
     try {
-        const {url: urlPerfil, nombre} = await uploadFile(file.name, file.data);
+        const { url: urlPerfil, nombre } = await uploadFile(file.name, file.data);
         // CALL proyecto1.addArchivo(nombre, url, tipo, acceso, usuario, retorno)
         const query = 'CALL proyecto1.addArchivo($1, $2, $3, $4, $5, 0)';
         const params = [nombre, urlPerfil, file.mimetype, acceso, idUsuario];
 
         // Insertar en la base de datos
-        const client = await dbConnection();
+        const client = await dbConnection().connect();
         const { rows } = await client.query(query, params);
 
 
@@ -37,6 +38,8 @@ const createFile = async (req = request, res = response) => {
         return res.status(500).json({
             msg: `No se pudo insertar el archivo: ${err}`
         })
+    } finally {
+        client.release(true);
     }
 
 }
@@ -48,10 +51,11 @@ const getArchivos = async (req = request, res = response) => {
 
     const query = `select * from proyecto1.getArchivo($1,$2);`;
     const params = [idUsuario, acceso];
+    let client;
     try {
 
         // Insertar en la base de datos
-        const client = await dbConnection();
+        const client = await dbConnection().connect();
         const { rows } = await client.query(query, params);
 
         return res.status(200).json({ archivos: rows });
@@ -66,64 +70,63 @@ const getArchivos = async (req = request, res = response) => {
         return res.status(500).json({
             msg: `No fue posible obtener los archivos`
         })
+    } finally {
+        client.release(true);
     }
 }
 
 
 const getPublicFiles = async (req = request, res = response) => {
     const { idUsuario } = req.params;
-    // console.log("🚀 ~ file: file.js ~ line 75 ~ getPublicFiles ~ idUsuario", idUsuario)
 
     const query = `select * from proyecto1.getArchivos($1);`;
     const params = [idUsuario];
+    let client;
     try {
 
         // Insertar en la base de datos
-        const client = await dbConnection();
+        const client = await dbConnection().connect();
         const { rows } = await client.query(query, params);
-        
+
         return res.status(200).json({ archivos: rows });
     } catch (err) {
         console.error(err);
         return res.status(500).json({
             msg: `No fue posible obtener los archivos`
         })
+    } finally {
+        client.release(true);
     }
 }
 
 const deleteArchivo = async (req = request, res = response) => {
 
     const { username, password, nombreArchivo } = req.body;
-    // console.log("🚀 ~ file: file.js ~ line 97 ~ deleteArchivo ~ req.body", req.body)
-
-    
 
     let idUsuario;
     try {
 
-        const {data} = await logIn(username, password)
+        const { data } = await logIn(username, password)
         idUsuario = data.id;
     } catch (error) {
         return res.status(400).json(error);
     }
 
+
+    let client;
     try {
 
         // Eliminar logicamente 
-        // deleteArchivo(nombre:string, user:int)retorno:int
         const query = 'CALL proyecto1.deleteArchivo($1, $2, 1)'
-        // console.log("🚀 ~ file: file.js ~ line 91 ~ deleteArchivo ~ query", query)
         const params = [nombreArchivo, idUsuario];
-        // console.log("🚀 ~ file: file.js ~ line 93 ~ deleteArchivo ~ params", params)
 
         const response = await deleteFile(nombreArchivo);
 
         // Eliminar en la base de datos
-        const client = await dbConnection();
+        const client = await dbConnection().connect();
         const resp = await client.query(query, params);
 
         const { rows } = resp;
-        // console.log("🚀 ~ file: file.js ~ line 98 ~ deleteArchivo ~ resp", resp)
         if (rows.length < 0 || rows[0].ret === 0)
             return res.status(400).json({ msg: 'No se pudo eliminar el archivo, el archivo no existe.' })
 
@@ -134,6 +137,8 @@ const deleteArchivo = async (req = request, res = response) => {
         return res.status(500).json({
             msg: 'No se pudo eliminar el archivo, contacte con el administrador'
         });
+    } finally {
+        client.release(true);
     }
 }
 
@@ -149,14 +154,14 @@ const updateArchivo = async (req = request, res = response) => {
         return res.status(400).json(error);
     }
 
+    let client;
     try {
         // updateArchivo(nombreAnterior:string, user:int, nombreNuevo:string, acceso:int)retorno:int
         const query = 'CALL proyecto1.updateArchivo($1, $2, $3, $4,0)'
         const params = [nombreArchivo, idUsuario, nombreNuevo, acceso];
-        console.log("🚀 ~ file: file.js ~ line 130 ~ updateArchivo ~ params", params)
 
         // Modificar en la base de datos
-        const client = await dbConnection();
+        const client = await dbConnection().connect();
         const { rows } = await client.query(query, params);
 
         if (rows.length < 0 || rows[0].ret === 0)
@@ -169,6 +174,8 @@ const updateArchivo = async (req = request, res = response) => {
         res.status(500).json({
             msg: 'No se pudo modificar el archivo, contacte con el administrador'
         });
+    } finally {
+        client.release(true);
     }
 }
 

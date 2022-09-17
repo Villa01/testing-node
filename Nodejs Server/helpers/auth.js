@@ -9,9 +9,11 @@ const logIn = (username, password) => {
         const params = [username];
 
         let user;
+
+        let client;
         try {
             // Obtener usuario en la BDD
-            const client = await dbConnection();
+            const client = await dbConnection().connect();
             const data = await client.query(query, params);
             if (data.rowCount < 1) {
                 reject({
@@ -26,6 +28,8 @@ const logIn = (username, password) => {
             reject({
                 msg: 'No se pudo obtener el usuario, consulte con el administrador. '
             })
+        } finally {
+            client.release(true);
         }
 
         if (!compareEncrypted(password, user.password)) {

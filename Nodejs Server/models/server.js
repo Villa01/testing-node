@@ -45,8 +45,8 @@ class Server {
     routes() {
         this.app.get(this.paths.healthcheck, (req, res) => res.status(200).json({ok: "ok"}));
         this.app.use(this.paths.users, require('../routes/users'));
-        // this.app.use(this.paths.auth, require('../routes/auth'));
-        // this.app.use(this.paths.file, require('../routes/file'));
+        this.app.use(this.paths.auth, require('../routes/auth'));
+        this.app.use(this.paths.file, require('../routes/file'));
     }
 
     listen() {
