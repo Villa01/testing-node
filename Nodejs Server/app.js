@@ -5,4 +5,7 @@ const Server = require('./models/server')
 
 const server = new Server();
 
-module.exports = server.getApp();
+module.exports = {
+    server,
+    app: server.getApp()
+};
