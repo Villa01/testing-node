@@ -64,7 +64,7 @@ describe('Users endpoints testing', () => {
         }
     })
 
-    test(`POST ${baseURL}/:username`, async () => {
+    test(`GET ${baseURL}/:username`, async () => {
 
         const response = await getUserByUsername(newUser.username);
 
@@ -91,7 +91,7 @@ describe('Users endpoints testing', () => {
         expect(response.body.msg).toEqual('Amigo agregado con exito.');
     })
 
-    test(`POST ${baseURL}/all/:idUsuario`, async () => {
+    test(`GET ${baseURL}/all/:idUsuario`, async () => {
         const respId = getUserByUsername(newUser.username);
         const id = (await respId).body.id;
 
@@ -102,10 +102,15 @@ describe('Users endpoints testing', () => {
 
     })
 
-    afterAll(async () => {
+    // afterAll(async () => {
 
-        const { dbConnection } = require('../../database/config');
-        await dbConnection().end();
-    });
+    //     const { dbConnection } = require('../../database/config');
+    //     await dbConnection().end();
+    // });
 })
 
+
+module.exports = {
+    createUser,
+    getUserByUsername
+}

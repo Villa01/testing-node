@@ -19,7 +19,7 @@ const createFile = async (req = request, res = response) => {
         const params = [nombre, urlPerfil, file.mimetype, acceso, idUsuario];
 
         // Insertar en la base de datos
-        const client = await dbConnection().connect();
+        client = await dbConnection().connect();
         const { rows } = await client.query(query, params);
 
 
@@ -55,17 +55,12 @@ const getArchivos = async (req = request, res = response) => {
     try {
 
         // Insertar en la base de datos
-        const client = await dbConnection().connect();
+        client = await dbConnection().connect();
         const { rows } = await client.query(query, params);
 
         return res.status(200).json({ archivos: rows });
     } catch (err) {
         console.error(err);
-        // if(err.code === '23503') {
-        //     return res.status(400).json({
-        //         msg: `No se pudo insertar el archivo: porque el usuario no existe. `
-        //     })
-        // }
 
         return res.status(500).json({
             msg: `No fue posible obtener los archivos`
@@ -85,7 +80,7 @@ const getPublicFiles = async (req = request, res = response) => {
     try {
 
         // Insertar en la base de datos
-        const client = await dbConnection().connect();
+        client = await dbConnection().connect();
         const { rows } = await client.query(query, params);
 
         return res.status(200).json({ archivos: rows });
@@ -120,10 +115,10 @@ const deleteArchivo = async (req = request, res = response) => {
         const query = 'CALL proyecto1.deleteArchivo($1, $2, 1)'
         const params = [nombreArchivo, idUsuario];
 
-        const response = await deleteFile(nombreArchivo);
+        // const response = await deleteFile(nombreArchivo);
 
         // Eliminar en la base de datos
-        const client = await dbConnection().connect();
+        client = await dbConnection().connect();
         const resp = await client.query(query, params);
 
         const { rows } = resp;
@@ -138,7 +133,7 @@ const deleteArchivo = async (req = request, res = response) => {
             msg: 'No se pudo eliminar el archivo, contacte con el administrador'
         });
     } finally {
-        client.release(true);
+        client?.release(true);
     }
 }
 
@@ -161,7 +156,7 @@ const updateArchivo = async (req = request, res = response) => {
         const params = [nombreArchivo, idUsuario, nombreNuevo, acceso];
 
         // Modificar en la base de datos
-        const client = await dbConnection().connect();
+        client = await dbConnection().connect();
         const { rows } = await client.query(query, params);
 
         if (rows.length < 0 || rows[0].ret === 0)

@@ -13,7 +13,7 @@ const logIn = (username, password) => {
         let client;
         try {
             // Obtener usuario en la BDD
-            const client = await dbConnection().connect();
+            client = await dbConnection().connect();
             const data = await client.query(query, params);
             if (data.rowCount < 1) {
                 reject({

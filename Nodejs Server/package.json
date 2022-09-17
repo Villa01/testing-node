@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "nodemon index.js",
     "start": "node index.js",
-    "test": "npx jest --detectOpenHandles"
+    "test": "npx jest"
   },
   "dependencies": {
     "aws-sdk": "^2.1202.0",
