@@ -64,6 +64,13 @@ describe('Users endpoints testing', () => {
         }
     })
 
+    test(`POST ${baseURL}/:username`, async () => {
+
+        const response = await getUserByUsername(newUser.username);
+
+        expect(response.status).toEqual(200);
+    })
+
     test(`POST ${baseURL}/add/`, async () => {
 
         await createUser(newUser2);
@@ -82,6 +89,17 @@ describe('Users endpoints testing', () => {
 
         expect(response.status).toEqual(201)
         expect(response.body.msg).toEqual('Amigo agregado con exito.');
+    })
+
+    test(`POST ${baseURL}/all/:idUsuario`, async () => {
+        const respId = getUserByUsername(newUser.username);
+        const id = (await respId).body.id;
+
+        const response = await request(server).get(`${baseURL}/all/${id}`)
+            .set('Content-Type', 'application/json')
+
+        expect(response.status).toEqual(200);
+
     })
 
     afterAll(async () => {

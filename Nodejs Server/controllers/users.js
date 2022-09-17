@@ -119,7 +119,7 @@ const getAllUsers = async (req = request, res = response) => {
     } catch (err) {
         console.error(err);
         return res.status(500).json({
-            msg: 'No se pudo insertar el usuario, consulte con el administrador. '
+            msg: 'No se pudo obtener los usuarios, consulte con el administrador. '
         })
     } finally {
         client.release(true);
