@@ -9,24 +9,24 @@ const connectionData = {
 }
 
 
-const pool = new Pool(connectionData);
-let client;
+let pool;
 
-const dbConnection = async () => {
-    try {
-        client = await pool.connect();
+// const dbConnection = async () => {
+//     try {
+//         client = await pool.connect();
+//         console.log('Database connected')
+//         return client;
 
-        console.log('Database connected')
-        return client;
-
-    } catch (error) {
-        console.error(error)
-        throw new Error('Error when connecting to database')
-    }
-}
+//     } catch (error) {
+//         console.error(error)
+//         throw new Error('Error when connecting to database')
+//     }
+// }
 
 
 module.exports = {
-    dbConnection,
-    client
+    dbConnection : () => {
+        if(pool) return pool;
+        return pool = new Pool(connectionData);
+    }
 };
